@@ -135,7 +135,7 @@ export class UserService {
         if (requestedPaginationModel == null || requestedPaginationModel.pageSize == null || requestedPaginationModel.startingCursor == null) {
             return {
                 startingCursor: 1,
-                pageSize: 10
+                pageSize: 100
             }
         } else {
             return {

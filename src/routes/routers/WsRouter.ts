@@ -11,24 +11,19 @@ const wsRouter = new Router();
 wsRouter.ws('/ticker', async (req, res, next) => {
     const ws = await res.accept();
     const decoder = new TextDecoder();
-    let delta: boolean = true;
     ws.on('message', async (msg: any) => {
         const stockTicker = decoder.decode(msg);
-        let quote = await yahooFinance.quote(stockTicker);
+        let quote = await getStockQuote(stockTicker);
 
         if (quote && quote.regularMarketPrice) {
             const sendData = async function () {
-                if (!quote || !quote.regularMarketPrice) {
-                    ws.close(500, "Yahoo Finance is down");
-                    return;
-                }
-                let randomPrice = quote.regularMarketPrice + Math.random() / 10;
+                let randomPrice = quote.regularMarketPrice * Math.random();
                 let tick = {
                     price: randomPrice,
                     symbol: quote.symbol
                 }
                 ws.send(JSON.stringify(tick));
-                quote = await yahooFinance.quote(stockTicker);
+                quote = await getStockQuote(stockTicker, quote.regularMarketPrice);
             };
 
             setInterval(sendData, 1000);
@@ -39,5 +34,12 @@ wsRouter.ws('/ticker', async (req, res, next) => {
 
 });
 
+async function getStockQuote(stockTicker: string, lastPrice?: number): Promise<any> {
+    // Returns random stock price because I got throttled by Yahoo
+    return {
+        symbol: stockTicker,
+        regularMarketPrice: (lastPrice) ? lastPrice * Math.random(): 99 * Math.random()
+    }
+}
 
 export default wsRouter;
