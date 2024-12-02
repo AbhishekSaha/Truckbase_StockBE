@@ -1,0 +1,42 @@
+version: '3.5'
+
+services:
+
+  db:
+    platform: linux/amd64
+    image: public.ecr.aws/docker/library/postgres:16-bookworm
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_vol:/app/var/lib
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: "public"
+
+#  TODO: Implement redis caching layer
+#  redis:
+#    platform: linux/amd64
+#    image: public.ecr.aws/docker/library/redis:bookworm
+#    ports:
+#      - "6379:6379"
+
+  api:
+    platform: linux/amd64
+    build: .
+    image: truckbase_backend:latest
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    environment:
+      POSTGRES_CONNECTION_URL: "postgresql://postgres:changeme@db:5432/public"
+    depends_on:
+      db:
+        condition: service_started
+      redis:
+        condition: service_started
+
+volumes:
+  postgres_vol:
